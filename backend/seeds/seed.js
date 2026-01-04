@@ -5,6 +5,28 @@ const prisma = new PrismaClient();
 
 const hashPassword = async (password) => bcrypt.hash(password, 10);
 
+const PRODUCT_IMAGES = [
+  'https://images.unsplash.com/photo-1518709779341-56cf8536f864?w=500&auto=format&fit=crop&q=60',
+  'https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=500&auto=format&fit=crop&q=60',
+  'https://images.unsplash.com/photo-1504148455328-c376907d081c?w=500&auto=format&fit=crop&q=60',
+  'https://images.unsplash.com/photo-1572981779307-38b8cabb2407?w=500&auto=format&fit=crop&q=60',
+  'https://images.unsplash.com/photo-1581094794329-cd1096a7a2a8?w=500&auto=format&fit=crop&q=60'
+];
+
+const PRODUCT_SPECS = [
+  { label: 'Material', value: 'Baja ringan' },
+  { label: 'Sertifikasi', value: 'SNI' },
+  { label: 'Ketahanan', value: 'Anti karat' }
+];
+
+const REVIEW_POOL = [
+  { authorName: 'Budi Santoso', rating: 5, content: 'Barang sesuai pesanan, kualitas oke banget. Pengiriman cepat!', hasMedia: true },
+  { authorName: 'Siti Aminah', rating: 4, content: 'Respon penjual baik, barang sampai aman.', hasMedia: false },
+  { authorName: 'Rudi Hartono', rating: 5, content: 'Harga miring kualitas bersaing.', hasMedia: true },
+  { authorName: 'Joko Anwar', rating: 3, content: 'Barang oke, pengiriman agak lama.', hasMedia: false },
+  { authorName: 'Lina Marlina', rating: 5, content: 'Suka banget! Bakal beli lagi.', hasMedia: true }
+];
+
 const ensureUser = async (data) => {
   const existing = await prisma.user.findUnique({ where: { email: data.email } });
   if (existing) {
@@ -120,11 +142,56 @@ const seedProducts = async () => {
     description: 'Produk berkualitas untuk kebutuhan proyek.',
     price: new Prisma.Decimal(50000 + index * 25000),
     category: index % 2 === 0 ? 'Bahan Bangunan' : 'Peralatan',
-    imageUrl: '',
+    location: index % 2 === 0 ? 'Jakarta' : 'Surabaya',
+    imageUrl: PRODUCT_IMAGES[index % PRODUCT_IMAGES.length],
+    condition: 'Baru',
+    weight: new Prisma.Decimal(1 + index * 0.25),
+    weightUnit: 'kg',
     stock: 10 + index
   }));
 
   await prisma.product.createMany({ data: products });
+};
+
+const seedProductDetails = async () => {
+  const products = await prisma.product.findMany();
+
+  for (const product of products) {
+    const imageCount = await prisma.productImage.count({ where: { productId: product.id } });
+    if (imageCount === 0) {
+      await prisma.productImage.createMany({
+        data: PRODUCT_IMAGES.slice(0, 4).map((url, index) => ({
+          productId: product.id,
+          url,
+          sortOrder: index
+        }))
+      });
+    }
+
+    const specCount = await prisma.productSpec.count({ where: { productId: product.id } });
+    if (specCount === 0) {
+      await prisma.productSpec.createMany({
+        data: PRODUCT_SPECS.map((spec, index) => ({
+          productId: product.id,
+          label: spec.label,
+          value: spec.value,
+          sortOrder: index
+        }))
+      });
+    }
+
+    const reviewCount = await prisma.productReview.count({ where: { productId: product.id } });
+    if (reviewCount === 0) {
+      const reviewData = REVIEW_POOL.map((review, index) => ({
+        productId: product.id,
+        authorName: review.authorName,
+        rating: review.rating,
+        content: review.content,
+        mediaUrls: review.hasMedia ? [PRODUCT_IMAGES[index % PRODUCT_IMAGES.length]] : []
+      }));
+      await prisma.productReview.createMany({ data: reviewData });
+    }
+  }
 };
 
 const seedOrders = async (users, tukang) => {
@@ -300,6 +367,8 @@ const seed = async () => {
   console.log('Seeded lamaran.');
   await seedProducts();
   console.log('Seeded products.');
+  await seedProductDetails();
+  console.log('Seeded product details.');
   const { orders } = await seedOrders(users, tukang);
   console.log('Seeded orders.');
   await seedOrderProgress(orders, tukang);
