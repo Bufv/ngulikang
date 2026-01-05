@@ -113,7 +113,7 @@ model Product {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  cartItems Cart[]
+  cartItems     Cart[]
   productImages ProductImage[]
   productSpecs  ProductSpec[]
   reviews       ProductReview[]
