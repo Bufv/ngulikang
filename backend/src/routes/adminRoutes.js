@@ -8,6 +8,13 @@ const {
   deleteUser,
   verifyTukang
 } = require('../controllers/adminController');
+const {
+  listAdminProducts,
+  getAdminProduct,
+  createProduct,
+  updateProduct,
+  deleteProduct
+} = require('../controllers/productController');
 
 const router = express.Router();
 
@@ -19,5 +26,11 @@ router.post('/users', createUser);
 router.put('/users/:id', updateUser);
 router.delete('/users/:id', deleteUser);
 router.put('/tukang/:id/verify', verifyTukang);
+
+router.get('/products', listAdminProducts);
+router.get('/products/:id', getAdminProduct);
+router.post('/products', createProduct);
+router.put('/products/:id', updateProduct);
+router.delete('/products/:id', deleteProduct);
 
 module.exports = router;
