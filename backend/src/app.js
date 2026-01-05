@@ -7,6 +7,7 @@ const path = require('path');
 const authRoutes = require('./routes/authRoutes');
 const adminRoutes = require('./routes/adminRoutes');
 const marketplaceRoutes = require('./routes/marketplaceRoutes');
+const teamRoutes = require('./routes/teamRoutes');
 const { notFound, errorHandler } = require('./middleware/errorHandler');
 
 const app = express();
@@ -32,6 +33,7 @@ app.use('/uploads', express.static(uploadDir));
 app.use('/api/auth', authRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/marketplace', marketplaceRoutes);
+app.use('/api', teamRoutes);
 
 app.use(notFound);
 app.use(errorHandler);
